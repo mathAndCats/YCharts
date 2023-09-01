@@ -96,9 +96,9 @@ fun LineChart(modifier: Modifier, lineChartData: LineChartData) {
             val linePoints: List<Point> = linePlotData.lines.flatMap { line -> line.dataPoints.map { it } }
 
             val (xMin, xMax, xAxisScale) = getXAxisScale(linePoints, xAxisData.steps)
-                val (yMin, _, yAxisScale) = getYAxisScale(linePoints, yAxisData.steps)
-                val maxElementInYAxis = getMaxElementInYAxis(yAxisScale, yAxisData.steps)
-                val xAxisData = xAxisData.copy(axisBottomPadding = bottomPadding)
+            val (yMin, _, yAxisScale) = getYAxisScale(linePoints, yAxisData.steps)
+            val maxElementInYAxis = getMaxElementInYAxis(yAxisScale, yAxisData.steps)
+            val xAxisData = xAxisData.copy(axisBottomPadding = bottomPadding)
             val yAxisData = yAxisData.copy(
                 axisBottomPadding = LocalDensity.current.run { rowHeight.toDp() },
                 axisTopPadding = paddingTop
@@ -147,7 +147,8 @@ fun LineChart(modifier: Modifier, lineChartData: LineChartData) {
                             }
                             .clip(
                                 RowClip(
-                                    columnWidth, paddingRight
+                                    0.8F * columnWidth,
+                                    paddingRight
                                 )
                             ),
                         xStart = columnWidth,
@@ -157,75 +158,86 @@ fun LineChart(modifier: Modifier, lineChartData: LineChartData) {
                 },
                 onDraw = { scrollOffset, xZoom ->
                     linePlotData.lines.forEach {  line->
-                    val yBottom = size.height - rowHeight
-                    val yOffset = ((yBottom - paddingTop.toPx()) / maxElementInYAxis)
-                    xOffset = xAxisData.axisStepSize.toPx() * xZoom
-                    val xLeft = columnWidth // To add extra space if needed
-                    val pointsData = getMappingPointsToGraph(
-                        line.dataPoints, xMin, xOffset, xLeft, scrollOffset, yBottom, yMin, yOffset
-                    )
-                    val (cubicPoints1, cubicPoints2) = getCubicPoints(pointsData)
-                    val tapPointLocks = mutableMapOf<Int, Pair<Point, Offset>>()
+                        val yBottom = size.height - rowHeight
+                        val yOffset = ((yBottom - paddingTop.toPx()) / maxElementInYAxis)
+                        xOffset = xAxisData.axisStepSize.toPx() * xZoom
+                        val xLeft = columnWidth // To add extra space if needed
 
-                    // Draw guide lines
-                    gridLines?.let {
-                        drawGridLines(
-                            yBottom,
-                            yAxisData.axisTopPadding.toPx(),
-                            xLeft,
-                            paddingRight,
+                        val xPadding = xAxisData.startDrawPadding.toPx() * xZoom
+
+                        val pointsData = getMappingPointsToGraph(
+                            line.dataPoints,
+                            xMin,
+                            xOffset,
+                            xLeft + xPadding,
                             scrollOffset,
-                            pointsData.size,
-                            xZoom,
-                            xAxisScale,
-                            yAxisData.steps,
-                            xAxisData.axisStepSize,
-                            it
+                            yBottom,
+                            yMin,
+                            yOffset
                         )
-                    }
 
-                    // Draw cubic line using the points and form a line graph
-                    val cubicPath = drawStraightOrCubicLine(
-                        pointsData, cubicPoints1, cubicPoints2, line.lineStyle
-                    )
+                        val (cubicPoints1, cubicPoints2) = getCubicPoints(pointsData)
+                        val tapPointLocks = mutableMapOf<Int, Pair<Point, Offset>>()
 
-                    // Draw Lines and Points and AreaUnderLine
-                    // Draw area under curve
-                    drawShadowUnderLineAndIntersectionPoint(
-                        cubicPath, pointsData, yBottom, line
-                    )
+                        // Draw guide lines
+                        gridLines?.let {
+                            drawGridLines(
+                                yBottom,
+                                yAxisData.axisTopPadding.toPx(),
+                                xLeft,
+                                paddingRight,
+                                scrollOffset,
+                                pointsData.size,
+                                xZoom,
+                                xAxisScale,
+                                yAxisData.steps,
+                                xAxisData.axisStepSize,
+                                it
+                            )
+                        }
 
-                    // Draw column to make graph look scrollable under Yaxis
-                    drawUnderScrollMask(columnWidth, paddingRight, bgColor)
+                        // Draw cubic line using the points and form a line graph
+                        val cubicPath = drawStraightOrCubicLine(
+                            pointsData, cubicPoints1, cubicPoints2, line.lineStyle
+                        )
 
-                    pointsData.forEachIndexed { index, point ->
-                        if (isTapped && point.isTapped(tapOffset.x, xOffset)) {
-                            // Dealing with only one line graph hence tapPointLocks[0]
-                            tapPointLocks[0] = line.dataPoints[index] to point
+                        // Draw Lines and Points and AreaUnderLine
+                        // Draw area under curve
+                        drawShadowUnderLineAndIntersectionPoint(
+                            cubicPath, pointsData, yBottom, line
+                        )
+
+                        // Draw column to make graph look scrollable under Yaxis
+                        drawUnderScrollMask(columnWidth, paddingRight, bgColor)
+
+                        pointsData.forEachIndexed { index, point ->
+                            if (isTapped && point.isTapped(tapOffset.x, xOffset)) {
+                                // Dealing with only one line graph hence tapPointLocks[0]
+                                tapPointLocks[0] = line.dataPoints[index] to point
+                            }
+                        }
+
+                        val selectedOffset = tapPointLocks.values.firstOrNull()?.second
+                        if (selectionTextVisibility && selectedOffset.isNotNull()) {
+                            drawHighlightText(
+                                identifiedPoint,
+                                selectedOffset ?: Offset(0f, 0f),
+                                line.selectionHighlightPopUp
+                            )
+                        }
+                        if (isTapped) {
+                            val x = tapPointLocks.values.firstOrNull()?.second?.x
+                            if (x != null) identifiedPoint =
+                                tapPointLocks.values.map { it.first }.first()
+                            drawHighLightOnSelectedPoint(
+                                tapPointLocks,
+                                columnWidth,
+                                paddingRight,
+                                yBottom,
+                                line.selectionHighlightPoint
+                            )
                         }
                     }
-
-                    val selectedOffset = tapPointLocks.values.firstOrNull()?.second
-                    if (selectionTextVisibility && selectedOffset.isNotNull()) {
-                        drawHighlightText(
-                            identifiedPoint,
-                            selectedOffset ?: Offset(0f, 0f),
-                            line.selectionHighlightPopUp
-                        )
-                    }
-                    if (isTapped) {
-                        val x = tapPointLocks.values.firstOrNull()?.second?.x
-                        if (x != null) identifiedPoint =
-                            tapPointLocks.values.map { it.first }.first()
-                        drawHighLightOnSelectedPoint(
-                            tapPointLocks,
-                            columnWidth,
-                            paddingRight,
-                            yBottom,
-                            line.selectionHighlightPoint
-                        )
-                    }
-                }
                 },
                 onPointClicked = { offset: Offset, _: Float ->
                     isTapped = true
@@ -241,40 +253,40 @@ fun LineChart(modifier: Modifier, lineChartData: LineChartData) {
                     selectionTextVisibility = false
                 })
             if (isTalkBackEnabled) {
-                    AccessibilityBottomSheetDialog(
-                        modifier = Modifier.fillMaxSize(),
-                        backgroundColor = Color.White,
-                        content = {
-                            LazyColumn {
-                                items(count = linePlotData.lines.size) { lineIndex ->
-                                    linePlotData.lines[lineIndex].dataPoints.forEachIndexed { pointIndex, point ->
-                                        Column {
-                                            LinePointInfo(
-                                                xAxisData.axisLabelDescription(
-                                                    xAxisData.labelData(
-                                                        pointIndex
-                                                    )
-                                                ),
-                                                point.description,
-                                               linePlotData.lines[lineIndex].lineStyle.color,
-                                                accessibilityConfig.titleTextSize,
-                                                accessibilityConfig.descriptionTextSize
-                                            )
+                AccessibilityBottomSheetDialog(
+                    modifier = Modifier.fillMaxSize(),
+                    backgroundColor = Color.White,
+                    content = {
+                        LazyColumn {
+                            items(count = linePlotData.lines.size) { lineIndex ->
+                                linePlotData.lines[lineIndex].dataPoints.forEachIndexed { pointIndex, point ->
+                                    Column {
+                                        LinePointInfo(
+                                            xAxisData.axisLabelDescription(
+                                                xAxisData.labelData(
+                                                    pointIndex
+                                                )
+                                            ),
+                                            point.description,
+                                            linePlotData.lines[lineIndex].lineStyle.color,
+                                            accessibilityConfig.titleTextSize,
+                                            accessibilityConfig.descriptionTextSize
+                                        )
 
-                                            ItemDivider(
-                                                thickness = accessibilityConfig.dividerThickness,
-                                                dividerColor = accessibilityConfig.dividerColor
-                                            )
-                                        }
-
+                                        ItemDivider(
+                                            thickness = accessibilityConfig.dividerThickness,
+                                            dividerColor = accessibilityConfig.dividerColor
+                                        )
                                     }
+
                                 }
                             }
-                        },
-                        popUpTopRightButtonTitle = accessibilityConfig.popUpTopRightButtonTitle,
-                        popUpTopRightButtonDescription = accessibilityConfig.popUpTopRightButtonDescription,
-                        sheetState = accessibilitySheetState
-                    )
+                        }
+                    },
+                    popUpTopRightButtonTitle = accessibilityConfig.popUpTopRightButtonTitle,
+                    popUpTopRightButtonDescription = accessibilityConfig.popUpTopRightButtonDescription,
+                    sheetState = accessibilitySheetState
+                )
 
             }
 
