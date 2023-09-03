@@ -8,8 +8,11 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
@@ -17,15 +20,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import co.yml.charts.chartcontainer.gestures.detectZoomGesture
+
+fun Modifier.vertical() =
+    layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        layout(placeable.height, placeable.width) {
+            placeable.place(
+                x = -(placeable.width / 2 - placeable.height / 2),
+                y = -(placeable.height / 2 - placeable.width / 2)
+            )
+        }
+    }
 
 /**
  *
@@ -56,7 +73,8 @@ fun ScrollableCanvasContainer(
     isPinchZoomEnabled: Boolean = true,
     onScroll: () -> Unit = {},
     onZoomInAndOut: () -> Unit = {},
-    scrollOrientation: Orientation = Orientation.Horizontal
+    scrollOrientation: Orientation = Orientation.Horizontal,
+    drawTitle: @Composable BoxScope.() -> Unit = {},
 ) {
     val scrollOffset = remember { mutableStateOf(0f) }
     val maxScrollOffset = remember { mutableStateOf(0f) }
@@ -109,7 +127,10 @@ fun ScrollableCanvasContainer(
                     maxScrollOffset.value = calculateMaxDistance(xZoom.value)
                     onDraw(scrollOffset.value, xZoom.value)
                 })
+
             drawXAndYAxis(scrollOffset.value, xZoom.value)
+
+            drawTitle.invoke(this)
         }
     }
 }

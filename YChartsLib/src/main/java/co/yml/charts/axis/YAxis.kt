@@ -3,15 +3,23 @@ package co.yml.charts.axis
 import android.graphics.Paint
 import android.text.TextPaint
 import android.text.TextUtils
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -21,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import co.yml.charts.chartcontainer.container.vertical
 import co.yml.charts.common.extensions.getTextHeight
 import co.yml.charts.common.extensions.getTextWidth
 import co.yml.charts.common.model.Point
@@ -53,73 +62,97 @@ fun YAxis(
     with(yAxisData) {
         var yAxisWidth by remember { mutableStateOf(0.dp) }
         val isRightAligned = axisPos == Gravity.RIGHT
-        Column(modifier = modifier.clipToBounds()) {
-            val steps = steps + 1
-            Canvas(
-                modifier = modifier
-                    .clipToBounds()
-                    .width(yAxisWidth)
-                    .semantics {
-                        this.testTag = "y_axis"
-                    }
-                    .background(backgroundColor)
-            ) {
-                val (yAxisHeight, segmentHeight) = getAxisInitValues(
-                    yAxisData,
-                    size.height,
-                    axisBottomPadding.toPx(),
-                    axisTopPadding.toPx(),
-                    dataCategoryOptions.isDataCategoryInYAxis,
-                    dataCategoryWidth
-                )
-                val (_, _, yAxisScale) = getYAxisScale(chartData, yAxisData.steps)
-                val yPositionFromBottom = yAxisHeight - yStart + scrollOffset
-                var yPos =
-                    if (dataCategoryOptions.isDataCategoryStartFromBottom) yPositionFromBottom else {
-                        if (zoomScale < 1) yPositionFromBottom else yStart - scrollOffset
+
+        Box {
+
+            Column(modifier = modifier.clipToBounds()) {
+                val steps = steps + 1
+                Canvas(
+                    modifier = modifier
+                        .clipToBounds()
+                        .width(yAxisWidth)
+                        .semantics {
+                            this.testTag = "y_axis"
+                        }
+                        .background(backgroundColor)
+                ) {
+                    val (yAxisHeight, segmentHeight) = getAxisInitValues(
+                        yAxisData,
+                        size.height,
+                        axisBottomPadding.toPx(),
+                        axisTopPadding.toPx(),
+                        dataCategoryOptions.isDataCategoryInYAxis,
+                        dataCategoryWidth
+                    )
+                    val (_, _, yAxisScale) = getYAxisScale(chartData, yAxisData.steps)
+                    val yPositionFromBottom = yAxisHeight - yStart + scrollOffset
+
+                    var yPos =
+                        if (dataCategoryOptions.isDataCategoryStartFromBottom) yPositionFromBottom else {
+                            if (zoomScale < 1) yPositionFromBottom else yStart - scrollOffset
+                        }
+
+                    val axisLabelPadding = if(yAxisData.unitsLabel.isBlank()) {
+                        0.dp
+                    } else
+                    {
+                        15.dp
                     }
 
-                for (index in 0 until steps) {
-                    // Drawing the axis labels
-                    yAxisWidth = drawAxisLabel(
-                        yPos,
-                        index,
-                        yAxisData,
-                        yAxisWidth,
-                        isRightAligned,
-                        yAxisHeight,
-                        segmentHeight,
-                        zoomScale,
-                        steps - 1
-                    )
-                    drawAxisLineWithPointers(
-                        yPos,
-                        yAxisData,
-                        index,
-                        steps,
-                        isRightAligned,
-                        yAxisWidth,
-                        yAxisHeight,
-                        segmentHeight,
-                        zoomScale,
-                        yAxisScale,
-                        yStart,
-                        barWidth
-                    )
-                    val yPosChangeFromBottom = (axisStepSize.toPx() * (zoomScale * yAxisScale))
-                    if (dataCategoryOptions.isDataCategoryStartFromBottom) {
-                        yPos -= yPosChangeFromBottom
-                    } else {
-                        if (zoomScale < 1) {
+                    for (index in 0 until steps) {
+                        // Drawing the axis labels
+                        yAxisWidth = drawAxisLabel(
+                            yPos,
+                            index,
+                            yAxisData,
+                            yAxisWidth,
+                            isRightAligned,
+                            yAxisHeight,
+                            segmentHeight,
+                            zoomScale,
+                            steps - 1,
+                            axisLabelPadding
+                        )
+                        drawAxisLineWithPointers(
+                            yPos,
+                            yAxisData,
+                            index,
+                            steps,
+                            isRightAligned,
+                            yAxisWidth,
+                            yAxisHeight,
+                            segmentHeight,
+                            zoomScale,
+                            yAxisScale,
+                            yStart,
+                            barWidth
+                        )
+                        val yPosChangeFromBottom = (axisStepSize.toPx() * (zoomScale * yAxisScale))
+                        if (dataCategoryOptions.isDataCategoryStartFromBottom) {
                             yPos -= yPosChangeFromBottom
                         } else {
-                            yPos += ((axisStepSize.toPx() * (zoomScale * yAxisScale)))
+                            if (zoomScale < 1) {
+                                yPos -= yPosChangeFromBottom
+                            } else {
+                                yPos += ((axisStepSize.toPx() * (zoomScale * yAxisScale)))
+                            }
                         }
-                    }
 
+                    }
                 }
             }
+
+            Box(contentAlignment = Alignment.CenterStart,
+                modifier = Modifier.align(Alignment.CenterStart)
+                    .vertical()
+                    .rotate(-90.0F)) {
+                Text(yAxisData.unitsLabel,
+                    style = MaterialTheme.typography.labelMedium)
+            }
+
+
         }
+
     }
 }
 
@@ -253,7 +286,8 @@ private fun DrawScope.drawAxisLabel(
     yAxisHeight: Float,
     segmentHeight: Float,
     zoomScale: Float,
-    lastIndex: Int
+    lastIndex: Int,
+    extraPadding: Dp
 ): Dp = with(axisData) {
     var calculatedYAxisWidth = yAxisWidth
     val yAxisTextPaint = TextPaint().apply {
@@ -275,7 +309,7 @@ private fun DrawScope.drawAxisLabel(
                 axisConfig.minTextWidthToEllipsize
             } else measuredWidth.toDp()
         calculatedYAxisWidth =
-            width + labelAndAxisLinePadding + axisOffset
+            width + labelAndAxisLinePadding + axisOffset + axisStartPadding + extraPadding
     }
     val ellipsizedText = TextUtils.ellipsize(
         yAxisLabel,
@@ -287,7 +321,7 @@ private fun DrawScope.drawAxisLabel(
         drawText(
             if (axisConfig.shouldEllipsizeAxisLabel) ellipsizedText.toString() else yAxisLabel,
             if (isRightAligned) calculatedYAxisWidth.toPx() - labelAndAxisLinePadding.toPx() else {
-                axisStartPadding.toPx()
+                axisStartPadding.toPx() + extraPadding.toPx()
             },
             if (dataCategoryOptions.isDataCategoryInYAxis)
                 yPos + height / 2

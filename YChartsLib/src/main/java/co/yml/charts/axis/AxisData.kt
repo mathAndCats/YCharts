@@ -58,7 +58,8 @@ data class AxisData(
     val startDrawPadding: Dp,
     val shouldDrawAxisLineTillEnd: Boolean,
     val axisLabelDescription: (String) -> String,
-    val dataCategoryOptions: DataCategoryOptions
+    val dataCategoryOptions: DataCategoryOptions,
+    val unitsLabel: String
 ) {
     class Builder {
         private var steps: Int = 1
@@ -85,6 +86,7 @@ data class AxisData(
         private var dataCategoryOptions: DataCategoryOptions = DataCategoryOptions()
         private var axisLabelDescription: (String) -> String =
             { label -> if (dataCategoryOptions.isDataCategoryInYAxis) "Y Axis label $label" else "X Axis label $label" }
+        private var unitsLabel: String = ""
 
         fun steps(count: Int) = apply { this.steps = count }
 
@@ -137,6 +139,9 @@ data class AxisData(
             this.dataCategoryOptions = dataCategoryOptions
         }
 
+        fun unitsLabel(label: String) = apply {
+            this.unitsLabel = label
+        }
 
         fun build() = AxisData(
             steps,
@@ -161,7 +166,8 @@ data class AxisData(
             startDrawPadding,
             shouldDrawAxisLineTillEnd,
             axisLabelDescription,
-            dataCategoryOptions
+            dataCategoryOptions,
+            unitsLabel
         )
     }
 }

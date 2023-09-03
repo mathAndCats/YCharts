@@ -2,12 +2,16 @@
 
 package co.yml.charts.ui.linechart
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.ExperimentalMaterialApi
@@ -15,6 +19,7 @@ import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,6 +43,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import co.yml.charts.axis.XAxis
 import co.yml.charts.axis.YAxis
 import co.yml.charts.axis.getXAxisScale
@@ -130,13 +136,16 @@ fun LineChart(modifier: Modifier, lineChartData: LineChartData) {
                 containerBackgroundColor = backgroundColor,
                 isPinchZoomEnabled = isZoomAllowed,
                 drawXAndYAxis = { scrollOffset, xZoom ->
+
                     YAxis(
                         modifier = Modifier
                             .fillMaxHeight()
                             .onGloballyPositioned {
                                 columnWidth = it.size.width.toFloat()
-                            }, yAxisData = yAxisData
+                            },
+                        yAxisData = yAxisData
                     )
+
                     XAxis(xAxisData = xAxisData,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -151,17 +160,26 @@ fun LineChart(modifier: Modifier, lineChartData: LineChartData) {
                                     paddingRight
                                 )
                             ),
-                        xStart = columnWidth,
+                        xStart =  columnWidth,
                         scrollOffset = scrollOffset,
                         zoomScale = xZoom,
-                        chartData = linePoints,axisStart = columnWidth)
+                        chartData = linePoints,
+                        axisStart = columnWidth)
+                },
+                drawTitle = {
+                    Box(contentAlignment = Alignment.TopCenter,
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    ) {
+                        Text(lineChartData.title,
+                            style = MaterialTheme.typography.labelLarge)
+                    }
                 },
                 onDraw = { scrollOffset, xZoom ->
                     linePlotData.lines.forEach {  line->
                         val yBottom = size.height - rowHeight
                         val yOffset = ((yBottom - paddingTop.toPx()) / maxElementInYAxis)
                         xOffset = xAxisData.axisStepSize.toPx() * xZoom
-                        val xLeft = columnWidth // To add extra space if needed
+                        val xLeft = columnWidth  // To add extra space if needed
 
                         val xPadding = xAxisData.startDrawPadding.toPx() * xZoom
 

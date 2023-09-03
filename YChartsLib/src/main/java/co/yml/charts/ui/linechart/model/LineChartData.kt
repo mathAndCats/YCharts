@@ -27,6 +27,7 @@ data class LineChartData(
     val linePlotData: LinePlotData,
     val xAxisData: AxisData = AxisData.Builder().build(),
     val yAxisData: AxisData = AxisData.Builder().build(),
+    val title: String = "",
     val isZoomAllowed: Boolean = true,
     val paddingTop: Dp = 30.dp,
     val bottomPadding: Dp = 10.dp,

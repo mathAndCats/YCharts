@@ -5,17 +5,23 @@ import android.text.TextPaint
 import android.text.TextUtils
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -54,53 +60,64 @@ fun XAxis(
 ) {
     with(xAxisData) {
         var xAxisHeight by remember { mutableStateOf(0.dp) }
-        Row(modifier = modifier.clipToBounds()) {
-            Canvas(
-                modifier = modifier
-                    .fillMaxWidth()
-                    .height(xAxisHeight)
-                    .semantics {
-                        this.testTag = "x_axis"
-                    }
-                    .background(backgroundColor)
+
+        Box(contentAlignment = Alignment.BottomStart, modifier = modifier) {
+
+            Box(contentAlignment = Alignment.TopCenter,
+                modifier = Modifier.align(Alignment.BottomCenter)
             ) {
-                val (_, _, xAxisScale) = getXAxisScale(chartData, steps)
-                //this is used when data category draws in Y axis and value in X axis
-                val xAxisSegmentWidth = (size.width - xStart - axisEndPadding.toPx()) / steps
+                Text(xAxisData.unitsLabel, style = MaterialTheme.typography.labelMedium)
+            }
 
-                var xPos = xStart + (startDrawPadding.toPx() * zoomScale) - scrollOffset
+            Row(modifier = modifier.clipToBounds(), verticalAlignment = Alignment.Bottom) {
 
-                // used in the case of barchart
-                if (startDrawPadding != 0.dp) {
-                    drawLine(
-                        axisLineColor,
-                        Offset(axisStart, 0f),
-                        Offset(xStart + (startDrawPadding.toPx() * zoomScale), 0f),
-                        strokeWidth = axisLineThickness.toPx()
-                    )
-                }
+                Canvas(
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .height(xAxisHeight)
+                        .semantics {
+                            this.testTag = "x_axis"
+                        }
+                        .background(backgroundColor)
+                ) {
+                    val (_, _, xAxisScale) = getXAxisScale(chartData, steps)
+                    //this is used when data category draws in Y axis and value in X axis
+                    val xAxisSegmentWidth = (size.width - xStart - axisEndPadding.toPx()) / steps
 
-                for (index in 0..steps) {
-                    xAxisHeight = drawXAxisLabel(
-                        xAxisData,
-                        index,
-                        xAxisScale,
-                        xPos,
-                        xStart,
-                        xAxisSegmentWidth
-                    )
-                    drawAxisLineWithPointers(
-                        xPos,
-                        xAxisData,
-                        zoomScale,
-                        xAxisScale,
-                        index != steps,
-                        xStart,
-                        index,
-                        xAxisSegmentWidth,
-                        startDrawPadding.toPx()
-                    )
-                    xPos += ((axisStepSize.toPx() * (zoomScale * xAxisScale)))
+                    var xPos = xStart + (startDrawPadding.toPx() * zoomScale) - scrollOffset
+
+                    // used in the case of barchart
+                    if (startDrawPadding != 0.dp) {
+                        drawLine(
+                            axisLineColor,
+                            Offset(axisStart, 0f),
+                            Offset(xStart + (startDrawPadding.toPx() * zoomScale), 0f),
+                            strokeWidth = axisLineThickness.toPx()
+                        )
+                    }
+
+                    for (index in 0..steps) {
+                        xAxisHeight = drawXAxisLabel(
+                            xAxisData,
+                            index,
+                            xAxisScale,
+                            xPos,
+                            xStart,
+                            xAxisSegmentWidth
+                        )
+                        drawAxisLineWithPointers(
+                            xPos,
+                            xAxisData,
+                            zoomScale,
+                            xAxisScale,
+                            index != steps,
+                            xStart,
+                            index,
+                            xAxisSegmentWidth,
+                            startDrawPadding.toPx()
+                        )
+                        xPos += ((axisStepSize.toPx() * (zoomScale * xAxisScale)))
+                    }
                 }
             }
         }

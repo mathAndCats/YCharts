@@ -162,7 +162,7 @@ class LineChartActivity : ComponentActivity() {
                                             start = -50,
                                             maxRange = 50
                                         ))
-                            }
+                            } 
                         })
                     }
                 }
@@ -178,14 +178,18 @@ class LineChartActivity : ComponentActivity() {
  */
 @Composable
 private fun SingleLineChartWithGridLines(pointsData: List<Point>) {
+
     val steps = 5
+
     val xAxisData = AxisData.Builder()
         .axisStepSize(30.dp)
         .topPadding(105.dp)
         .steps(pointsData.size - 1)
         .labelData { i -> pointsData[i].x.toInt().toString() }
         .labelAndAxisLinePadding(15.dp)
+        .unitsLabel("X-Axis Label")
         .build()
+
     val yAxisData = AxisData.Builder()
         .steps(steps)
         .labelAndAxisLinePadding(20.dp)
@@ -195,7 +199,10 @@ private fun SingleLineChartWithGridLines(pointsData: List<Point>) {
             val yMax = pointsData.maxOf { it.y }
             val yScale = (yMax - yMin) / steps
             ((i * yScale) + yMin).formatToSinglePrecision()
-        }.build()
+        }
+        .unitsLabel("Y-Axis Label")
+        .build()
+
     val data = LineChartData(
         linePlotData = LinePlotData(
             lines = listOf(
@@ -211,6 +218,7 @@ private fun SingleLineChartWithGridLines(pointsData: List<Point>) {
         ),
         xAxisData = xAxisData,
         yAxisData = yAxisData,
+        title = "Plot Title",
         gridLines = GridLines()
     )
     LineChart(
