@@ -140,17 +140,22 @@ private fun BarchartWithSolidBars() {
         .axisLabelAngle(20f)
         .startDrawPadding(48.dp)
         .labelData { index -> barData[index].label }
+        .unitsLabel("X-axis label")
         .build()
+
     val yAxisData = AxisData.Builder()
         .steps(yStepSize)
         .labelAndAxisLinePadding(20.dp)
         .axisOffset(20.dp)
         .labelData { index -> (index * (maxRange / yStepSize)).toString() }
+        .unitsLabel("Y-axis label")
         .build()
+
     val barChartData = BarChartData(
         chartData = barData,
         xAxisData = xAxisData,
         yAxisData = yAxisData,
+        title = "BarChart Title",
         barStyle = BarStyle(
             paddingBetweenBars = 20.dp,
             barWidth = 25.dp

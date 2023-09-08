@@ -33,6 +33,7 @@ data class BarChartData(
     val chartData: List<BarData>,
     val xAxisData: AxisData = AxisData.Builder().build(),
     val yAxisData: AxisData = AxisData.Builder().build(),
+    val title: String = "",
     val backgroundColor: Color = Color.White,
     val horizontalExtraSpace: Dp = 0.dp,
     val barStyle: BarStyle = BarStyle(),

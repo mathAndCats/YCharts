@@ -1,6 +1,7 @@
 package co.yml.charts.ui.barchart
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -165,6 +167,14 @@ fun VerticalBarChart(
                         0f,
                         barChartType
                     )
+                }
+            },
+            drawTitle = {
+                Box(contentAlignment = Alignment.TopCenter,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                ) {
+                    Text(barChartData.title,
+                        style = MaterialTheme.typography.labelLarge)
                 }
             },
             drawXAndYAxis = { scrollOffset, xZoom ->

@@ -30,6 +30,7 @@ data class GroupBarChartData(
     val barPlotData: BarPlotData,
     val xAxisData: AxisData = AxisData.Builder().build(),
     val yAxisData: AxisData = AxisData.Builder().build(),
+    val title: String = "",
     val backgroundColor: Color = Color.White,
     val horizontalExtraSpace: Dp = 10.dp,
     val paddingEnd: Dp = 10.dp,
